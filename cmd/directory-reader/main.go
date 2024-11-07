@@ -3,14 +3,12 @@ package main
 import (
 	"flag"
 	"fmt"
+	"github.com/dustin/go-humanize"
+	"github.com/jvanmelckebeke/directory-reader/internal/dirreader"
+	"github.com/jvanmelckebeke/directory-reader/internal/ignore"
+	"github.com/jvanmelckebeke/directory-reader/internal/tokenizer"
 	"os"
 	"path/filepath"
-	"strings"
-
-	"github.com/dustin/go-humanize"
-	"github.com/jvanmelckebeke/directory-structure/internal/dirreader"
-	"github.com/jvanmelckebeke/directory-structure/internal/ignore"
-	"github.com/jvanmelckebeke/directory-structure/internal/tokenizer"
 )
 
 func main() {
@@ -42,25 +40,19 @@ func main() {
 	// Get the script name
 	scriptName := filepath.Base(os.Args[0])
 
-	// Load ignore patterns
-	ignorePatterns, err := ignore.LoadDefaultIgnorePatterns(targetDirectory)
+	// Default ignore patterns (Linux and PyCharm)
+	ignorePatterns, err := ignore.FetchLanguageAndDefaultIgnorePatterns(ignoreLangs)
+
 	if err != nil {
-		fmt.Println("Error loading ignore patterns:", err)
+		fmt.Println("Error fetching ignore patterns:", err)
 		os.Exit(1)
 	}
 
-	// Process --ignore flag
-	if ignoreLangs != "" {
-		langs := strings.Split(ignoreLangs, ",")
-		err := ignore.AddLanguageIgnorePatterns(ignorePatterns, langs)
-		if err != nil {
-			fmt.Println("Error adding language ignore patterns:", err)
-			os.Exit(1)
-		}
-	}
+	// Compile the ignore patterns
+	ignorer := ignore.CompileIgnorePatterns(ignorePatterns)
 
 	// Create the markdown file
-	outputFile, err := dirreader.CreateMarkdownFile(scriptName, targetDirectory, ignorePatterns)
+	outputFile, err := dirreader.CreateMarkdownFile(scriptName, targetDirectory, ignorer)
 	if err != nil {
 		fmt.Println("Error:", err)
 		os.Exit(1)
