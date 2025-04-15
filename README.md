@@ -70,10 +70,7 @@ Files are ordered in the output based on importance:
 
 ## Use Cases
 
-- **Project Documentation**: Generate comprehensive documentation of your codebase
-- **Code Reviews**: Share code structure and content with reviewers
-- **LLM Integration**: Prepare your code for input to language models like GPT
-- **Onboarding**: Help new team members understand project structure
+- **LLM Integration**: ask your favorite LLM to generate a readme, provide codereviews, ...
 
 ## Contributing
 
