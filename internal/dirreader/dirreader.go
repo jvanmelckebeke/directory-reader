@@ -7,12 +7,80 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"strings"
 )
 
 type fileInfo struct {
 	Path string
 	Name string
 	Rank fileutils.FileRank
+}
+
+func DetectLanguage(filePath string) string {
+	ext := filepath.Ext(filePath)
+	fileName := filepath.Base(filePath)
+
+	// Special cases for specific filenames
+	switch fileName {
+	case "Dockerfile":
+		return "dockerfile"
+	case "Makefile":
+		return "makefile"
+	case ".gitignore", ".readerignore":
+		return "gitignore"
+	case "package.json", "composer.json":
+		return "json"
+	}
+
+	// Map file extensions to language identifiers
+	switch ext {
+	case ".go":
+		return "go"
+	case ".py":
+		return "python"
+	case ".js":
+		return "javascript"
+	case ".ts":
+		return "typescript"
+	case ".jsx":
+		return "jsx"
+	case ".tsx":
+		return "tsx"
+	case ".html":
+		return "html"
+	case ".css":
+		return "css"
+	case ".scss":
+		return "scss"
+	case ".xml":
+		return "xml"
+	case ".sh":
+		return "bash"
+	case ".md":
+		return "markdown"
+	case ".java":
+		return "java"
+	case ".c":
+		return "c"
+	case ".cpp":
+		return "cpp"
+	case ".cs":
+		return "csharp"
+	case ".rb":
+		return "ruby"
+	case ".php":
+		return "php"
+	case ".json":
+		return "json"
+	case ".yaml", ".yml":
+		return "yaml"
+	case ".toml":
+		return "toml"
+	case ".sql":
+		return "sql"
+	default:
+		return "" // No specific language highlighting
+	}
 }
 
 // CreateMarkdownFile generates the directory_content.md file
@@ -95,14 +163,24 @@ func CreateMarkdownFile(scriptName, targetDirectory string, ignorer *ignore.GitI
 	// Now write the sorted files to the markdown
 	for _, file := range files {
 		mdFile.WriteString(fmt.Sprintf("## %s\n\n", file.Path))
-		mdFile.WriteString("```\n")
+
+		// Detect the language for syntax highlighting
+		lang := DetectLanguage(file.Path)
+		if lang != "" {
+			mdFile.WriteString(fmt.Sprintf("```%s\n", lang))
+		} else {
+			mdFile.WriteString("```\n")
+		}
 
 		fileContent, err := os.ReadFile(filepath.Join(targetDirectory, file.Path))
 		if err != nil {
 			mdFile.WriteString(fmt.Sprintf("Error reading file: %s\n", err.Error()))
 		} else {
 			mdFile.Write(fileContent)
-			mdFile.WriteString("\n")
+			if !strings.HasSuffix(string(fileContent), "\n") {
+				// Add a newline if the file doesn't end with one
+				mdFile.WriteString("\n")
+			}
 		}
 		mdFile.WriteString("```\n\n")
 	}

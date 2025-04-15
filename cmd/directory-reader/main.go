@@ -38,7 +38,7 @@ func main() {
 	// Auto-detect languages in the directory
 	detectedLangs, err := ignore.DetectLanguagesInDirectory(targetDirectory)
 	if err != nil {
-		fmt.Println("Warning: Failed to auto-detect languages:", err)
+		fmt.Printf("Warning: Failed to auto-detect languages: %v\n", err)
 	} else if detectedLangs != "" {
 		fmt.Printf("Auto-detected languages: %s\n", detectedLangs)
 		if ignoreLangs != "" {
