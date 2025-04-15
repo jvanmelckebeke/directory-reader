@@ -13,15 +13,13 @@ import (
 
 func main() {
 	var (
-		countTokens bool
 		ignoreLangs string
 	)
 
-	// Parse command-line arguments
-	flag.BoolVar(&countTokens, "count-tokens", false, "Count tokens in the generated directory_content.md file")
+	// Parse command-line arguments - removed the count-tokens flag
 	flag.StringVar(&ignoreLangs, "ignore", "", "Comma-separated list of programming languages to ignore (e.g., 'go,python')")
 	flag.Usage = func() {
-		fmt.Fprintf(flag.CommandLine.Output(), "Usage: %s [--count-tokens] [--ignore=lang1,lang2] <target_directory>\n", os.Args[0])
+		fmt.Fprintf(flag.CommandLine.Output(), "Usage: %s [--ignore=lang1,lang2] <target_directory>\n", os.Args[0])
 		flag.PrintDefaults()
 	}
 	flag.Parse()
@@ -35,6 +33,19 @@ func main() {
 	if info, err := os.Stat(targetDirectory); err != nil || !info.IsDir() {
 		fmt.Printf("Error: '%s' is not a valid directory.\n", targetDirectory)
 		os.Exit(1)
+	}
+
+	// Auto-detect languages in the directory
+	detectedLangs, err := ignore.DetectLanguagesInDirectory(targetDirectory)
+	if err != nil {
+		fmt.Println("Warning: Failed to auto-detect languages:", err)
+	} else if detectedLangs != "" {
+		fmt.Printf("Auto-detected languages: %s\n", detectedLangs)
+		if ignoreLangs != "" {
+			ignoreLangs = ignoreLangs + "," + detectedLangs
+		} else {
+			ignoreLangs = detectedLangs
+		}
 	}
 
 	// Get the script name
@@ -60,14 +71,15 @@ func main() {
 
 	fmt.Printf("Markdown file '%s' has been created in '%s'.\n", outputFile, targetDirectory)
 
-	// Count tokens if --count-tokens flag is provided
-	if countTokens {
-		tokenCount, err := tokenizer.CountFileTokens(outputFile)
-		if err != nil {
-			fmt.Println("Error counting tokens:", err)
-			os.Exit(1)
-		}
-		formattedCount := humanize.Comma(int64(tokenCount))
-		fmt.Printf("Number of tokens in '%s': %s\n", outputFile, formattedCount)
+	// Always count tokens now
+	tokenCount, err := tokenizer.CountFileTokens(outputFile)
+	if err != nil {
+		fmt.Println("Error counting tokens:", err)
+		os.Exit(1)
 	}
+
+	formattedCount := humanize.Comma(int64(tokenCount))
+
+	// Show warning if token count exceeds 16k
+	fmt.Printf("Token count: %s\n", formattedCount)
 }
